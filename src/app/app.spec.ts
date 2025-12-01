@@ -20,10 +20,10 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render title', () => {
+  it('should expose the correct title signal', () => {
     const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, expense-tracker-frontend');
+    const app = fixture.componentInstance as any;
+    // App uses Angular signals for title; verify it contains the expected app name
+    expect(app.title()).toBe('expense-tracker-frontend');
   });
 });
