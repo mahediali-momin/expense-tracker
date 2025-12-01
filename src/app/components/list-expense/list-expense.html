@@ -1,0 +1,186 @@
+<div class="list-container" @pageSlide>
+    <!-- header -->
+    <header class="list-header header-top">
+
+        <div class="page-title">
+            <h1>Transactions</h1>
+            <p class="subtitle">Track and manage your expenses and earnings</p>
+        </div>
+        <div class="actions">
+            <button class="btn btn-primary" [routerLink]="['/add']" aria-label="Add transaction">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                <span>Add Transaction</span>
+            </button>
+            <button class="btn btn-outline ms-3" [routerLink]="['/dashboard']" aria-label="View dashboard">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h7v7h-7v-7z" stroke="currentColor"
+                        stroke-width="1.5" stroke-linejoin="round" />
+                </svg>
+                <span>Dashboard</span>
+            </button>
+
+        </div>
+    </header>
+
+    <div class="filters-container">
+        <div class="search-box">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                style="position:relative;left:85%">
+                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" />
+                <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <input type="text" class="input search-input mb-3" placeholder="Search by title..." [(ngModel)]="searchTerm"
+                (input)="onSearchChange()" />
+        </div>
+
+        <div class="date-filter">
+            <mat-form-field class="date-range-picker">
+                <mat-label>Date Range</mat-label>
+                <mat-date-range-input [rangePicker]="picker" (dateChange)="onDateRangeChange()">
+                    <input matStartDate placeholder="Start date" [formControl]="dateRange.controls.start">
+                    <input matEndDate placeholder="End date" [formControl]="dateRange.controls.end">
+                </mat-date-range-input>
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-date-range-picker #picker></mat-date-range-picker>
+            </mat-form-field>
+        </div>
+        <button class="btn-refresh" (click)="refresh()" title="Refresh and reset filters">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 4v6h6M22 20v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                <path d="M21 9A9 9 0 006 6L2 10M3 15l4 4a9 9 0 0013-2" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+        </button>
+    </div>
+
+    <div class="stats-grid" *ngIf="expenses && expenses.length > 0">
+        <!-- Total Earnings -->
+        <div class="stat-card earning">
+            <div class="stat-icon earning-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+            </div>
+            <div class="stat-content">
+                <h3>Total Earnings</h3>
+                <p class="stat-value earning">{{ getTotalEarnings() | currency }}</p>
+            </div>
+        </div>
+
+        <!-- Total Expense -->
+        <div class="stat-card expense">
+            <div class="stat-icon expense-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 1v22m11-11H1" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    <path d="M4 6h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" stroke="currentColor" stroke-width="2"
+                        stroke-linejoin="round" />
+                </svg>
+            </div>
+            <div class="stat-content">
+                <h3>Total Expenses</h3>
+                <p class="stat-value expense">{{ getTotalExpenses() | currency }}</p>
+            </div>
+        </div>
+
+        <!-- Net Amount -->
+        <div class="stat-card net" [class.positive]="getNetAmount() >= 0" [class.negative]="getNetAmount() < 0">
+            <div class="stat-icon net-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 5v14M19 8l-7 7-7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+            </div>
+            <div class="stat-content">
+                <h3>Net Income</h3>
+                <p class="stat-value" [class.positive]="getNetAmount() >= 0" [class.negative]="getNetAmount() < 0">
+                    {{ getNetAmount() >= 0 ? '+' : '' }}{{ getNetAmount() | currency }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Total Transactions -->
+        <div class="stat-card">
+            <div class="stat-icon trans-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+                    <path d="M9 12h6M9 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+            </div>
+            <div class="stat-content">
+                <h3>Total Transactions</h3>
+                <p class="stat-value">{{ getFilteredExpenses().length }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="recent-container">
+        <h2>Transactions</h2>
+
+        <!-- Empty state -->
+        <div *ngIf="getFilteredExpenses().length === 0" class="empty-state">
+            <p>No transactions found. Try adjusting your search or add a new transaction.</p>
+            <button class="btn btn-primary" [routerLink]="['/add']">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                <span>Add Transaction</span>
+            </button>
+        </div>
+
+        <!-- Transaction list styled like recent transactions -->
+        <div *ngIf="getFilteredExpenses().length > 0" class="recent-list">
+            <div *ngFor="let transaction of getFilteredExpenses()" class="recent-item"
+                [class.earning]="transaction.type === 'earning'">
+                <div class="recent-header">
+                    <div class="header-left">
+                        <!-- <span class="type-badge" [class.earning]="transaction.type === 'earning'"
+                            [class.expense]="transaction.type !== 'earning'">
+                            {{ transaction.type === 'earning' ? 'EARNING' : 'EXPENSE' }}
+                        </span> -->
+                        <strong>{{ transaction.title || 'Untitled' }}</strong>
+                    </div>
+                    <span class="amount" [class.earning]="transaction.type === 'earning'"
+                        [class.expense]="transaction.type !== 'earning'">
+                        {{ transaction.type === 'earning' ? '+' : '-' }}{{ transaction.total | currency }}
+                    </span>
+                </div>
+
+                <div class="recent-details">
+                    <span class="category-tag">
+                        {{ transaction.category || 'Uncategorized' }}
+                    </span>
+                </div>
+
+                <div class="recent-footer">
+                    <span class="recent-date">{{ formatDate(transaction.date) }}</span>
+                    <div class="transaction-actions">
+                        <button class="action-btn" (click)="edit(transaction.id)" title="Edit">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M18.5 2.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                        <button class="action-btn" (click)="confirmDelete(transaction.id)" title="Delete">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

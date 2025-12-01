@@ -1,0 +1,4 @@
+/* Add Expense Component Styles - All styles moved to global src/styles.css */
+/* This file is kept for component-specific overrides if needed */
+
+/* Component is now using global Bootstrap 5 + custom utilities from src/styles.css */

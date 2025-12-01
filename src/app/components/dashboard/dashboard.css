@@ -1,0 +1,7 @@
+/* Dashboard Component Styles - All styles moved to global src/styles.css */
+/* This file is kept for component-specific overrides if needed */
+
+/* Component is now using global Bootstrap 5 + custom utilities from src/styles.css */
+.cdk-overlay-container .mat-mdc-form-field .mat-mdc-form-field-subscript-wrapper.mat-mdc-form-field-bottom-align {
+    display: none;
+}

@@ -1,0 +1,46 @@
+.input,
+.select {
+    padding: 12px 14px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: var(--text);
+    transition: var(--transition);
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+}
+
+.input::placeholder,
+.select::placeholder {
+    color: #9ca3af;
+}
+
+.input:hover,
+.select:hover {
+    border-color: rgba(37, 99, 235, 0.25);
+    transform: translateY(-1px);
+}
+
+.input:focus,
+.select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15), inset 0 1px 3px rgba(37, 99, 235, 0.05);
+    background: linear-gradient(135deg, #f0f7ff 0%, #f8f9ff 100%);
+}
+
+.input:disabled,
+.select:disabled {
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    color: var(--muted);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.input-error {
+    border-color: var(--danger);
+}
+
+.input-error:focus {
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1), inset 0 1px 3px rgba(220, 38, 38, 0.05);
+}
