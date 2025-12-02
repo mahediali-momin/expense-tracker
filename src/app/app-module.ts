@@ -9,6 +9,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ExpenseService } from './services/expense';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { provideHighcharts } from 'highcharts-angular';
 
 @NgModule({
   declarations: [
@@ -25,6 +26,7 @@ import { MatNativeDateModule } from '@angular/material/core';
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideHttpClient(),
+    provideHighcharts(),
     ExpenseService
   ],
   bootstrap: [App]

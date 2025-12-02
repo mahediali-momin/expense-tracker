@@ -11,6 +11,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatNativeDateModule, provideNativeDateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import * as Highcharts from 'highcharts';
+import { HighchartsChartComponent } from 'highcharts-angular';
 
 // Custom date format
 const MY_DATE_FORMATS = {
@@ -41,7 +43,20 @@ interface CategoryData {
         provideNativeDateAdapter(),
         { provide: MAT_DATE_FORMATS, useValue: MY_DATE_FORMATS }
     ],
-    imports: [CommonModule, RouterModule, MatFormFieldModule, MatDatepickerModule, FormsModule, MatDatepickerModule, MatInputModule, MatFormFieldModule, MatNativeDateModule, MatButtonModule, MatIconModule],
+    imports: [
+        CommonModule,
+        RouterModule,
+        MatFormFieldModule,
+        MatDatepickerModule,
+        FormsModule,
+        MatDatepickerModule,
+        MatInputModule,
+        MatFormFieldModule,
+        MatNativeDateModule,
+        MatButtonModule,
+        MatIconModule,
+        HighchartsChartComponent
+    ],
     animations: [
         trigger('pageSlide', [
             transition(':enter', [
@@ -80,6 +95,9 @@ export class DashboardComponent implements OnInit {
     private categoryColorMap: { [name: string]: string } = {};
 
     private chartColors: string[] = ['#2563eb', '#667eea', '#764ba2', '#f59e0b', '#16a34a', '#dc2626', '#8b5cf6', '#06b6d4'];
+
+    // Highcharts donut options (library itself is provided via provideHighcharts in AppModule)
+    donutChartOptions: Highcharts.Options = {};
 
     constructor(private service: ExpenseService, private categoryService: CategoryService) { }
 
@@ -156,6 +174,9 @@ export class DashboardComponent implements OnInit {
         const earnData = Object.entries(earnMap).map(([category, d]) => ({ category, total: d.total, count: d.count }));
         this.earningCategoryData = this.calculatePercentages(earnData);
         this.topEarningCategory = this.earningCategoryData.length > 0 ? this.earningCategoryData[0] : null;
+
+        // Update Highcharts donut series whenever totals change
+        this.updateDonutChart();
     }
 
     /**
@@ -163,6 +184,111 @@ export class DashboardComponent implements OnInit {
      */
     private calculateNet(): void {
         this.netAmount = this.totalEarning - this.totalExpense;
+    }
+
+    /**
+     * Configure Highcharts donut data for Expense vs Earning
+     */
+    private updateDonutChart(): void {
+        // Inner ring: Expense vs Earning totals
+        const innerData: Highcharts.PointOptionsObject[] = [];
+        if (this.totalExpense > 0) {
+            innerData.push({ name: 'Expense', y: this.totalExpense, color: '#ef4444' });
+        }
+        if (this.totalEarning > 0) {
+            innerData.push({ name: 'Earning', y: this.totalEarning, color: '#16a34a' });
+        }
+
+        // Outer ring: detailed categories (only expenses, category-wise)
+        const outerData: Highcharts.PointOptionsObject[] = [];
+        this.expenseCategoryData.forEach((cat, index) => {
+            if (cat.total > 0) {
+                outerData.push({
+                    name: cat.category,
+                    y: cat.total,
+                    color: this.getCategoryColor(index, cat.category)
+                });
+            }
+        });
+
+        const hasData = innerData.length > 0 && outerData.length > 0;
+
+        if (!hasData) {
+            this.donutChartOptions = {
+                chart: { type: 'pie', backgroundColor: 'transparent' },
+                title: { text: undefined },
+                series: [
+                    {
+                        type: 'pie',
+                        innerSize: '60%',
+                        data: [{ name: 'No data', y: 1, color: '#e5e7eb' }]
+                    }
+                ]
+            };
+            return;
+        }
+
+        const innerSeries: Highcharts.SeriesPieOptions = {
+            type: 'pie',
+            name: 'Totals',
+            // Slightly smaller and shifted left to give labels space on the right
+            size: '50%',
+            innerSize: '30%',
+            center: ['35%', '50%'],
+            data: innerData,
+            dataLabels: {
+                enabled: true,
+                distance: -20,
+                style: { fontWeight: 'bold', textOutline: 'none', color: '#111827' },
+                format: '{point.name}'
+            }
+        };
+
+        const outerSeries: Highcharts.SeriesPieOptions = {
+            type: 'pie',
+            name: 'Categories',
+            // Outer ring a bit smaller and sharing same center
+            size: '70%',
+            innerSize: '50%',
+            center: ['35%', '50%'],
+            data: outerData,
+            dataLabels: {
+                enabled: true,
+                distance: 20,
+                softConnector: true,
+                crop: false,
+                overflow: 'allow',
+                style: { fontSize: '11px', textOutline: 'none' },
+                formatter: function (): string {
+                    const name = (this as any).point?.name || '';
+                    const pctVal = (this as any).percentage;
+                    const pct = typeof pctVal === 'number' ? pctVal.toFixed(1) : '';
+                    return pct ? `${name}: ${pct}%` : name;
+                }
+            }
+        };
+
+        this.donutChartOptions = {
+            chart: {
+                type: 'pie',
+                backgroundColor: 'transparent',
+                marginRight: 80
+            },
+            title: { text: undefined },
+            tooltip: {
+                pointFormat: '{series.name} - <b>{point.name}</b>: {point.y:.2f} ({point.percentage:.1f}%)'
+            },
+            legend: {
+                enabled: false
+            },
+            plotOptions: {
+                pie: {
+                    showInLegend: false,
+                    borderWidth: 0
+                }
+            },
+            series: [innerSeries, outerSeries]
+        };
     }
 
     /**
